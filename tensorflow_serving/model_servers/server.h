@@ -84,6 +84,10 @@ class Server {
     bool remove_unused_fields_from_bundle_metagraph = true;
     bool use_tflite_model = false;
 
+    // For session group
+    bool use_per_session_threads = false;
+    tensorflow::int32 session_num_per_group = 0;
+
     Options();
   };
 

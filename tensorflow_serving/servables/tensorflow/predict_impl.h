@@ -29,7 +29,11 @@ namespace serving {
 class TensorflowPredictor {
  public:
   explicit TensorflowPredictor(bool use_saved_model)
-      : use_saved_model_(use_saved_model) {}
+      : use_saved_model_(use_saved_model), use_session_group_(false) {}
+
+  explicit TensorflowPredictor(bool use_saved_model, bool use_session_group)
+      : use_saved_model_(use_saved_model),
+        use_session_group_(use_session_group) {}
 
   Status Predict(const RunOptions& run_options, ServerCore* core,
                  const PredictRequest& request, PredictResponse* response);
@@ -41,11 +45,16 @@ class TensorflowPredictor {
                               const PredictRequest& request,
                               PredictResponse* response);
 
+  Status PredictWithModelSpecV2(const RunOptions& run_options, ServerCore* core,
+                                const ModelSpec& model_spec,
+                                const PredictRequest& request,
+                                PredictResponse* response);
  private:
   // If use_saved_model_ is true, a SavedModelBundle handle will be retrieved
   // from the ServerCore and the new SavedModel SignatureDef format will be
   // used.
   bool use_saved_model_;
+  bool use_session_group_ = false;
 };
 
 }  // namespace serving

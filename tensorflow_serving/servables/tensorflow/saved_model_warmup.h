@@ -41,6 +41,10 @@ Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
                            const RunOptions& run_options,
                            const string& export_dir, SavedModelBundle* bundle);
 
+Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
+                           const RunOptions& run_options,
+                           const string& export_dir, SavedModelBundleV2* bundle);
+
 }  // namespace serving
 }  // namespace tensorflow
 

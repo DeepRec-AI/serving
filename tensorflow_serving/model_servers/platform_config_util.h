@@ -29,6 +29,9 @@ namespace serving {
 PlatformConfigMap CreateTensorFlowPlatformConfigMap(
     const SessionBundleConfig& session_bundle_config, bool use_saved_model);
 
+PlatformConfigMap CreateTensorFlowPlatformConfigMap(
+    const SessionGroupBundleConfig& session_bundle_config, bool use_saved_model);
+
 }  // namespace serving
 }  // namespace tensorflow
 

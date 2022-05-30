@@ -33,11 +33,13 @@ namespace serving {
 // TODO(b/32248363): add SavedModelBundleConfig after we switch Model Server to
 // Saved Model.
 SessionOptions GetSessionOptions(const SessionBundleConfig& config);
+SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config);
 
 // Returns RunOptions based on SessionBundleConfig.
 // TODO(b/32248363): add SavedModelBundleConfig after we switch Model Server to
 // Saved Model.
 RunOptions GetRunOptions(const SessionBundleConfig& config);
+RunOptions GetRunOptions(const SessionGroupBundleConfig& config);
 
 // Creates a BatchScheduler based on the batching configuration.
 Status CreateBatchScheduler(
@@ -71,6 +73,12 @@ Status WrapSessionForBatching(
     std::shared_ptr<SharedBatchScheduler<BatchingSessionTask>> batch_scheduler,
     const std::vector<SignatureDef>& signatures,
     std::unique_ptr<Session>* session);
+
+Status WrapSessionGroupForBatching(
+    const BatchingParameters& batching_config,
+    std::shared_ptr<SharedBatchScheduler<BatchingSessionTask>> batch_scheduler,
+    const std::vector<SignatureDef>& signatures,
+    std::unique_ptr<SessionGroup>* session_group);
 
 // Wraps a session in a new session that only supports Run() without batching.
 Status WrapSession(std::unique_ptr<Session>* session);

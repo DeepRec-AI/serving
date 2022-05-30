@@ -162,8 +162,8 @@ cc_test(
 
 cc_library(
     name = "saved_model_bundle_factory",
-    srcs = ["saved_model_bundle_factory.cc"],
-    hdrs = ["saved_model_bundle_factory.h"],
+    srcs = ["saved_model_bundle_factory.cc", "saved_model_bundle_v2_factory.cc"],
+    hdrs = ["saved_model_bundle_factory.h", "saved_model_bundle_v2_factory.h"],
     visibility = [
         "//visibility:public",
     ],
@@ -258,8 +258,8 @@ cc_test(
 
 cc_library(
     name = "saved_model_bundle_source_adapter",
-    srcs = ["saved_model_bundle_source_adapter.cc"],
-    hdrs = ["saved_model_bundle_source_adapter.h"],
+    srcs = ["saved_model_bundle_source_adapter.cc", "saved_model_bundle_v2_source_adapter.cc"],
+    hdrs = ["saved_model_bundle_source_adapter.h", "saved_model_bundle_v2_source_adapter.h"],
     visibility = [
         "//visibility:public",
     ],
