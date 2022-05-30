@@ -11,3 +11,12 @@ message SavedModelBundleSourceAdapterConfig {
   // TODO(b/32248363): Replace this field with the "real" field(s).
   SessionBundleConfig legacy_config = 1000;
 }
+
+// Config proto for SavedModelBundleV2SourceAdapter.
+message SavedModelBundleV2SourceAdapterConfig {
+  // A SessionGroupBundleConfig.
+  // FOR INTERNAL USE ONLY DURING TRANSITION TO SAVED_MODEL. WILL BE DEPRECATED.
+  // TODO(b/32248363): Replace this field with the "real" field(s).
+  SessionGroupBundleConfig legacy_config = 1000;
+}
+

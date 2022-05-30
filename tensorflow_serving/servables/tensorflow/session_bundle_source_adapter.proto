@@ -8,3 +8,9 @@ package tensorflow.serving;
 message SessionBundleSourceAdapterConfig {
   SessionBundleConfig config = 1;
 }
+
+// Config proto for SessionGroupBundleSourceAdapter.
+message SessionGroupBundleSourceAdapterConfig {
+  SessionGroupBundleConfig config = 1;
+}
+

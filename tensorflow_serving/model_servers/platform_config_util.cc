@@ -44,5 +44,26 @@ PlatformConfigMap CreateTensorFlowPlatformConfigMap(
   return platform_config_map;
 }
 
+PlatformConfigMap CreateTensorFlowPlatformConfigMap(
+    const SessionGroupBundleConfig& session_bundle_config, bool use_saved_model) {
+  PlatformConfigMap platform_config_map;
+  ::google::protobuf::Any source_adapter_config;
+  if (use_saved_model) {
+    SavedModelBundleV2SourceAdapterConfig
+        saved_model_bundle_source_adapter_config;
+    *saved_model_bundle_source_adapter_config.mutable_legacy_config() =
+        session_bundle_config;
+    source_adapter_config.PackFrom(saved_model_bundle_source_adapter_config);
+  } else {
+    SessionGroupBundleSourceAdapterConfig session_bundle_source_adapter_config;
+    *session_bundle_source_adapter_config.mutable_config() =
+        session_bundle_config;
+    source_adapter_config.PackFrom(session_bundle_source_adapter_config);
+  }
+  (*(*platform_config_map.mutable_platform_configs())[kTensorFlowModelPlatform]
+        .mutable_source_adapter_config()) = source_adapter_config;
+  return platform_config_map;
+}
+
 }  // namespace serving
 }  // namespace tensorflow

@@ -75,7 +75,24 @@ SessionOptions GetSessionOptions(const SessionBundleConfig& config) {
   return options;
 }
 
+SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config) {
+  SessionGroupOptions options;
+  options.target = config.session_target();
+  options.config = config.session_config();
+  options.session_num = config.session_num();
+  return options;
+}
+
 RunOptions GetRunOptions(const SessionBundleConfig& config) {
+  RunOptions run_options;
+  if (config.has_session_run_load_threadpool_index()) {
+    run_options.set_inter_op_thread_pool(
+        config.session_run_load_threadpool_index().value());
+  }
+  return run_options;
+}
+
+RunOptions GetRunOptions(const SessionGroupBundleConfig& config) {
   RunOptions run_options;
   if (config.has_session_run_load_threadpool_index()) {
     run_options.set_inter_op_thread_pool(
@@ -144,6 +161,16 @@ Status EstimateResourceFromPath(const string& path, FileProbingEnv* env,
   ram_entry->set_quantity(ram_requirement);
 
   return Status::OK();
+}
+
+Status WrapSessionGroupForBatching(const BatchingParameters& batching_config,
+                                   std::shared_ptr<Batcher> batch_scheduler,
+                                   const std::vector<SignatureDef>& signatures,
+                                   std::unique_ptr<SessionGroup>* session_group) {
+  for (int i = 0; i < (*session_group)->GetSessionNum(); ++i) {
+    std::unique_ptr<Session>* sess = (*session_group)->GetSessionPtr(i);
+    WrapSessionForBatching(batching_config, batch_scheduler, signatures, sess);
+  }
 }
 
 Status WrapSessionForBatching(const BatchingParameters& batching_config,

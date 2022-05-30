@@ -148,8 +148,37 @@ Status TensorflowPredictor::Predict(const RunOptions& run_options,
     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                               "Missing ModelSpec");
   }
+
+  if (use_session_group_) {
+    return PredictWithModelSpecV2(run_options, core, request.model_spec(), request,
+                                  response); 
+  }
+
   return PredictWithModelSpec(run_options, core, request.model_spec(), request,
                               response);
+}
+
+Status TensorflowPredictor::PredictWithModelSpecV2(const RunOptions& run_options,
+                                                   ServerCore* core,
+                                                   const ModelSpec& model_spec,
+                                                   const PredictRequest& request,
+                                                   PredictResponse* response) {
+  if (use_saved_model_) {
+    ServableHandle<SavedModelBundleV2> bundle;
+    TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
+    return internal::RunPredict(
+        run_options, bundle->meta_graph_def, bundle.id().version,
+        core->predict_response_tensor_serialization_option(),
+        bundle->session_group->GetSession(), request, response);
+  }
+  ServableHandle<SessionGroupBundle> bundle;
+  TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
+  // SessionBundle is officially deprecated. SessionBundlePredict is for
+  // backward compatibility.
+  return SessionBundlePredict(
+      run_options, bundle->meta_graph_def, bundle.id().version,
+      core->predict_response_tensor_serialization_option(), request, response,
+      bundle->session_group->GetSession());
 }
 
 Status TensorflowPredictor::PredictWithModelSpec(const RunOptions& run_options,

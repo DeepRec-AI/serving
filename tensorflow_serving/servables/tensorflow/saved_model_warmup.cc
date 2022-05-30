@@ -94,9 +94,12 @@ Status RunWarmupRequest(const PredictionLog& warmup_record,
 constexpr char WarmupConsts::kRequestsFileName[];
 constexpr int WarmupConsts::kMaxNumRecords;
 
-Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
-                           const RunOptions& run_options,
-                           const string& export_dir, SavedModelBundle* bundle) {
+namespace {
+Status InternalRunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
+                                   const RunOptions& run_options,
+                                   const string& export_dir,
+                                   const MetaGraphDef& meta_graph_def,
+                                   Session* session) {
   const uint64 start_microseconds = Env::Default()->NowMicros();
   const string warmup_path =
       io::JoinPath(export_dir, kSavedModelAssetsExtraDirectory,
@@ -136,8 +139,8 @@ Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
 
     for (int i = 0; i < num_request_iterations; ++i) {
       TF_RETURN_IF_ERROR(RunWarmupRequest(prediction_log, run_options,
-                                          bundle->meta_graph_def,
-                                          bundle->session.get()));
+                                          meta_graph_def,
+                                          session));
     }
     ++num_warmup_records;
     if (num_warmup_records > WarmupConsts::kMaxNumRecords) {
@@ -167,6 +170,25 @@ Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
             << ". Number of warmup records read: " << num_warmup_records
             << ". Elapsed time (microseconds): " << warmup_latency << ".";
   return Status::OK();
+}
+} // namespace
+
+Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
+                           const RunOptions& run_options,
+                           const string& export_dir, SavedModelBundle* bundle) {
+  return InternalRunSavedModelWarmup(model_warmup_options,
+                                     run_options, export_dir,
+                                     bundle->meta_graph_def,
+                                     bundle->session.get());
+}
+
+Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
+                           const RunOptions& run_options,
+                           const string& export_dir, SavedModelBundleV2* bundle) {
+  return InternalRunSavedModelWarmup(model_warmup_options,
+                                     run_options, export_dir,
+                                     bundle->meta_graph_def,
+                                     bundle->session_group->GetLeaderSession());
 }
 
 }  // namespace serving

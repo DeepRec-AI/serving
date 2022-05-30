@@ -38,6 +38,7 @@ limitations under the License.
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/protobuf.h"
 #include "tensorflow/core/protobuf/config.pb.h"
+#include "tensorflow/core/util/env_var.h"
 #include "tensorflow_serving/config/model_server_config.pb.h"
 #include "tensorflow_serving/config/monitoring_config.pb.h"
 #include "tensorflow_serving/config/platform_config.pb.h"
@@ -177,8 +178,172 @@ void Server::PollFilesystemAndReloadConfig(const string& config_file_path) {
   }
 }
 
+namespace {
+Status CreatePlatformConfigMap(const Server::Options& server_options,
+                               ServerCore::Options& options) {
+  const bool use_saved_model = true;
+
+  SessionBundleConfig session_bundle_config;
+  // Batching config
+  if (server_options.enable_batching) {
+    BatchingParameters* batching_parameters =
+        session_bundle_config.mutable_batching_parameters();
+    if (server_options.batching_parameters_file.empty()) {
+      batching_parameters->mutable_thread_pool_name()->set_value(
+          "model_server_batch_threads");
+    } else {
+      TF_RETURN_IF_ERROR(ParseProtoTextFile<BatchingParameters>(
+          server_options.batching_parameters_file, batching_parameters));
+    }
+  } else if (!server_options.batching_parameters_file.empty()) {
+    return errors::InvalidArgument(
+        "server_options.batching_parameters_file is set without setting "
+        "server_options.enable_batching to true.");
+  }
+
+  session_bundle_config.mutable_session_config()
+      ->mutable_gpu_options()
+      ->set_per_process_gpu_memory_fraction(
+          server_options.per_process_gpu_memory_fraction);
+
+  if (server_options.tensorflow_intra_op_parallelism > 0 &&
+      server_options.tensorflow_inter_op_parallelism > 0 &&
+      server_options.tensorflow_session_parallelism > 0){
+      return errors::InvalidArgument("Either configure "
+        "server_options.tensorflow_session_parallelism "
+        "or (server_options.tensorflow_intra_op_parallelism, "
+        "server_options.tensorflow_inter_op_parallelism) separately. "
+        "You cannot configure all.");
+  } else if (server_options.tensorflow_intra_op_parallelism > 0 ||
+      server_options.tensorflow_inter_op_parallelism > 0){
+          session_bundle_config.mutable_session_config()
+          ->set_intra_op_parallelism_threads(
+              server_options.tensorflow_intra_op_parallelism);
+          session_bundle_config.mutable_session_config()
+          ->set_inter_op_parallelism_threads(
+              server_options.tensorflow_inter_op_parallelism);
+  } else {
+      session_bundle_config.mutable_session_config()
+      ->set_intra_op_parallelism_threads(
+          server_options.tensorflow_session_parallelism);
+      session_bundle_config.mutable_session_config()
+      ->set_inter_op_parallelism_threads(
+          server_options.tensorflow_session_parallelism);
+  }
+
+  const std::vector<string> tags =
+      tensorflow::str_util::Split(server_options.saved_model_tags, ",");
+  for (const string& tag : tags) {
+    *session_bundle_config.add_saved_model_tags() = tag;
+  }
+  session_bundle_config.set_enable_model_warmup(
+      server_options.enable_model_warmup);
+  if (server_options.num_request_iterations_for_warmup > 0) {
+    session_bundle_config.mutable_model_warmup_options()
+        ->mutable_num_request_iterations()
+        ->set_value(server_options.num_request_iterations_for_warmup);
+  }
+  session_bundle_config.set_remove_unused_fields_from_bundle_metagraph(
+      server_options.remove_unused_fields_from_bundle_metagraph);
+  session_bundle_config.set_use_tflite_model(server_options.use_tflite_model);
+  options.platform_config_map = CreateTensorFlowPlatformConfigMap(
+      session_bundle_config, use_saved_model);
+
+  return Status::OK();
+}
+
+Status CreatePlatformConfigMapV2(const Server::Options& server_options,
+                                 ServerCore::Options& options) {
+  const bool use_saved_model = true;
+
+  SessionGroupBundleConfig session_bundle_config;
+
+  // session num
+  session_bundle_config.set_session_num(
+      server_options.session_num_per_group);
+
+  // use_per_session_threads
+  session_bundle_config.mutable_session_config()
+      ->set_use_per_session_threads(
+          server_options.use_per_session_threads);
+
+  // Batching config
+  if (server_options.enable_batching) {
+    BatchingParameters* batching_parameters =
+        session_bundle_config.mutable_batching_parameters();
+    if (server_options.batching_parameters_file.empty()) {
+      batching_parameters->mutable_thread_pool_name()->set_value(
+          "model_server_batch_threads");
+    } else {
+      TF_RETURN_IF_ERROR(ParseProtoTextFile<BatchingParameters>(
+          server_options.batching_parameters_file, batching_parameters));
+    }
+  } else if (!server_options.batching_parameters_file.empty()) {
+    return errors::InvalidArgument(
+        "server_options.batching_parameters_file is set without setting "
+        "server_options.enable_batching to true.");
+  }
+
+  session_bundle_config.mutable_session_config()
+      ->mutable_gpu_options()
+      ->set_per_process_gpu_memory_fraction(
+          server_options.per_process_gpu_memory_fraction);
+
+  if (server_options.tensorflow_intra_op_parallelism > 0 &&
+      server_options.tensorflow_inter_op_parallelism > 0 &&
+      server_options.tensorflow_session_parallelism > 0){
+      return errors::InvalidArgument("Either configure "
+        "server_options.tensorflow_session_parallelism "
+        "or (server_options.tensorflow_intra_op_parallelism, "
+        "server_options.tensorflow_inter_op_parallelism) separately. "
+        "You cannot configure all.");
+  } else if (server_options.tensorflow_intra_op_parallelism > 0 ||
+      server_options.tensorflow_inter_op_parallelism > 0){
+          session_bundle_config.mutable_session_config()
+          ->set_intra_op_parallelism_threads(
+              server_options.tensorflow_intra_op_parallelism);
+          session_bundle_config.mutable_session_config()
+          ->set_inter_op_parallelism_threads(
+              server_options.tensorflow_inter_op_parallelism);
+  } else {
+      session_bundle_config.mutable_session_config()
+      ->set_intra_op_parallelism_threads(
+          server_options.tensorflow_session_parallelism);
+      session_bundle_config.mutable_session_config()
+      ->set_inter_op_parallelism_threads(
+          server_options.tensorflow_session_parallelism);
+  }
+
+  const std::vector<string> tags =
+      tensorflow::str_util::Split(server_options.saved_model_tags, ",");
+  for (const string& tag : tags) {
+    *session_bundle_config.add_saved_model_tags() = tag;
+  }
+  session_bundle_config.set_enable_model_warmup(
+      server_options.enable_model_warmup);
+  if (server_options.num_request_iterations_for_warmup > 0) {
+    session_bundle_config.mutable_model_warmup_options()
+        ->mutable_num_request_iterations()
+        ->set_value(server_options.num_request_iterations_for_warmup);
+  }
+  session_bundle_config.set_remove_unused_fields_from_bundle_metagraph(
+      server_options.remove_unused_fields_from_bundle_metagraph);
+  session_bundle_config.set_use_tflite_model(server_options.use_tflite_model);
+  options.platform_config_map = CreateTensorFlowPlatformConfigMap(
+      session_bundle_config, use_saved_model);
+
+  return Status::OK();
+}
+
+}
+
 Status Server::BuildAndStart(const Options& server_options) {
   const bool use_saved_model = true;
+
+  bool use_session_group = false;
+  if (server_options.session_num_per_group > 0) {
+    use_session_group = true;
+  }
 
   if (server_options.grpc_port == 0) {
     return errors::InvalidArgument("server_options.grpc_port is not set.");
@@ -205,71 +370,11 @@ Status Server::BuildAndStart(const Options& server_options) {
   }
 
   if (server_options.platform_config_file.empty()) {
-    SessionBundleConfig session_bundle_config;
-    // Batching config
-    if (server_options.enable_batching) {
-      BatchingParameters* batching_parameters =
-          session_bundle_config.mutable_batching_parameters();
-      if (server_options.batching_parameters_file.empty()) {
-        batching_parameters->mutable_thread_pool_name()->set_value(
-            "model_server_batch_threads");
-      } else {
-        TF_RETURN_IF_ERROR(ParseProtoTextFile<BatchingParameters>(
-            server_options.batching_parameters_file, batching_parameters));
-      }
-    } else if (!server_options.batching_parameters_file.empty()) {
-      return errors::InvalidArgument(
-          "server_options.batching_parameters_file is set without setting "
-          "server_options.enable_batching to true.");
-    }
-
-    session_bundle_config.mutable_session_config()
-        ->mutable_gpu_options()
-        ->set_per_process_gpu_memory_fraction(
-            server_options.per_process_gpu_memory_fraction);
-
-    if (server_options.tensorflow_intra_op_parallelism > 0 &&
-        server_options.tensorflow_inter_op_parallelism > 0 &&
-        server_options.tensorflow_session_parallelism > 0){
-        return errors::InvalidArgument("Either configure "
-          "server_options.tensorflow_session_parallelism "
-          "or (server_options.tensorflow_intra_op_parallelism, "
-          "server_options.tensorflow_inter_op_parallelism) separately. "
-          "You cannot configure all.");
-    } else if (server_options.tensorflow_intra_op_parallelism > 0 ||
-        server_options.tensorflow_inter_op_parallelism > 0){
-            session_bundle_config.mutable_session_config()
-            ->set_intra_op_parallelism_threads(
-                server_options.tensorflow_intra_op_parallelism);
-            session_bundle_config.mutable_session_config()
-            ->set_inter_op_parallelism_threads(
-                server_options.tensorflow_inter_op_parallelism);
+    if (use_session_group) {
+      TF_RETURN_IF_ERROR(CreatePlatformConfigMapV2(server_options, options));
     } else {
-        session_bundle_config.mutable_session_config()
-        ->set_intra_op_parallelism_threads(
-            server_options.tensorflow_session_parallelism);
-        session_bundle_config.mutable_session_config()
-        ->set_inter_op_parallelism_threads(
-            server_options.tensorflow_session_parallelism);
+      TF_RETURN_IF_ERROR(CreatePlatformConfigMap(server_options, options));
     }
-
-    const std::vector<string> tags =
-        tensorflow::str_util::Split(server_options.saved_model_tags, ",");
-    for (const string& tag : tags) {
-      *session_bundle_config.add_saved_model_tags() = tag;
-    }
-    session_bundle_config.set_enable_model_warmup(
-        server_options.enable_model_warmup);
-    if (server_options.num_request_iterations_for_warmup > 0) {
-      session_bundle_config.mutable_model_warmup_options()
-          ->mutable_num_request_iterations()
-          ->set_value(server_options.num_request_iterations_for_warmup);
-    }
-    session_bundle_config.set_remove_unused_fields_from_bundle_metagraph(
-        server_options.remove_unused_fields_from_bundle_metagraph);
-    session_bundle_config.set_use_tflite_model(server_options.use_tflite_model);
-    options.platform_config_map = CreateTensorFlowPlatformConfigMap(
-        session_bundle_config, use_saved_model);
   } else {
     TF_RETURN_IF_ERROR(ParseProtoTextFile<PlatformConfigMap>(
         server_options.platform_config_file, &options.platform_config_map));
@@ -317,6 +422,7 @@ Status Server::BuildAndStart(const Options& server_options) {
   predict_server_options.use_saved_model = use_saved_model;
   predict_server_options.enforce_session_run_timeout =
       server_options.enforce_session_run_timeout;
+  predict_server_options.use_session_group = use_session_group;
   prediction_service_ =
       absl::make_unique<PredictionServiceImpl>(predict_server_options);
   ::grpc::ServerBuilder builder;
