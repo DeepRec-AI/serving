@@ -9,6 +9,7 @@ licenses(["notice"])  # Apache 2.0
 cc_binary(
     name = "ev_print_req_server",
     srcs = ["ev_print_req_server.cc"],
+    linkopts = ["-lm"],
     deps = [
         "@com_github_libevent_libevent//:libevent",
         "@com_google_absl//absl/strings",
