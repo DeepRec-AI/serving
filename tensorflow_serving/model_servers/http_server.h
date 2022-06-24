@@ -25,6 +25,16 @@ namespace serving {
 
 class ServerCore;
 
+// HTTP Server options.
+// Options for configuring a HttpServer object.
+struct HttpServerOptions {
+  int port = 0;
+  int num_threads = 1;
+  int timeout_in_ms = 30000;  // 30 seconds.
+  bool use_saved_model = true;
+  bool use_session_group = false;
+};
+
 // Returns a HTTP Server that has following endpoints:
 //
 //   o HTTP/REST API (under /v1/models/...)
@@ -33,6 +43,11 @@ class ServerCore;
 std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
     int port, int num_threads, int timeout_in_ms,
     const MonitoringConfig& monitoring_config, ServerCore* core);
+
+std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
+    const HttpServerOptions& http_opt,
+    const MonitoringConfig& monitoring_config,
+    ServerCore* core);
 
 }  // namespace serving
 }  // namespace tensorflow

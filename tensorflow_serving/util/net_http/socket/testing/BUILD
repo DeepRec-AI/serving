@@ -22,4 +22,5 @@ cc_binary(
     deps = [
         "@com_github_libevent_libevent//:libevent",
     ],
+    linkopts = ["-lm"],
 )
