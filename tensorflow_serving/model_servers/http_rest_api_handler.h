@@ -71,7 +71,8 @@ class HttpRestApiHandler {
   // `core` is not owned and is expected to outlive HttpRestApiHandler
   // instance.
   HttpRestApiHandler(const RunOptions& run_options, ServerCore* core);
-
+  HttpRestApiHandler(const RunOptions& run_options, ServerCore* core,
+                     bool use_session_group);
   ~HttpRestApiHandler();
 
   // Process a HTTP request.
@@ -104,13 +105,15 @@ class HttpRestApiHandler {
                                      const absl::string_view model_version_str,
                                      string* output);
   Status GetInfoMap(const ModelSpec& model_spec, const string& signature_name,
-                    ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap);
+                    ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap,
+                    bool use_bundle_v2);
 
   const RunOptions run_options_;
   ServerCore* core_;
   std::unique_ptr<TensorflowPredictor> predictor_;
   const RE2 prediction_api_regex_;
   const RE2 modelstatus_api_regex_;
+  bool use_session_group_ = false;
 };
 
 }  // namespace serving

@@ -130,6 +130,15 @@ class RestApiRequestDispatcher {
     handler_.reset(new HttpRestApiHandler(run_options, core));
   }
 
+  RestApiRequestDispatcher(int timeout_in_ms, ServerCore* core,
+                           bool use_session_group)
+      : regex_(HttpRestApiHandler::kPathRegex) {
+    RunOptions run_options = RunOptions();
+    run_options.set_timeout_in_ms(timeout_in_ms);
+    handler_.reset(new HttpRestApiHandler(run_options, core,
+                                          use_session_group));
+  }
+
   net_http::RequestHandler Dispatch(net_http::ServerRequestInterface* req) {
     if (RE2::FullMatch(string(req->uri_path()), regex_)) {
       return [this](net_http::ServerRequestInterface* req) {
@@ -173,12 +182,11 @@ class RestApiRequestDispatcher {
 
   const RE2 regex_;
   std::unique_ptr<HttpRestApiHandler> handler_;
+  bool use_session_group_ = false;
 };
 
-}  // namespace
-
-std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
-    int port, int num_threads, int timeout_in_ms,
+std::unique_ptr<net_http::HTTPServerInterface> InternalCreateAndStartHttpServer(
+    int port, int num_threads, int timeout_in_ms, bool use_session_group,
     const MonitoringConfig& monitoring_config, ServerCore* core) {
   auto options = absl::make_unique<net_http::ServerOptions>();
   options->AddPort(static_cast<uint32_t>(port));
@@ -207,7 +215,8 @@ std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
   }
 
   std::shared_ptr<RestApiRequestDispatcher> dispatcher =
-      std::make_shared<RestApiRequestDispatcher>(timeout_in_ms, core);
+      std::make_shared<RestApiRequestDispatcher>(timeout_in_ms, core,
+                                                 use_session_group);
   net_http::RequestHandlerOptions handler_options;
   server->RegisterRequestDispatcher(
       [dispatcher](net_http::ServerRequestInterface* req) {
@@ -218,6 +227,24 @@ std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
     return server;
   }
   return nullptr;
+}
+
+}  // namespace
+
+std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
+    int port, int num_threads, int timeout_in_ms,
+    const MonitoringConfig& monitoring_config, ServerCore* core) {
+  return InternalCreateAndStartHttpServer(port, num_threads, timeout_in_ms,
+      false/*use_session_group*/, monitoring_config, core);
+}
+
+std::unique_ptr<net_http::HTTPServerInterface> CreateAndStartHttpServer(
+    const HttpServerOptions& http_opt,
+    const MonitoringConfig& monitoring_config,
+    ServerCore* core) {
+  return InternalCreateAndStartHttpServer(http_opt.port, http_opt.num_threads,
+      http_opt.timeout_in_ms, http_opt.use_session_group, monitoring_config,
+      core);
 }
 
 }  // namespace serving

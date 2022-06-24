@@ -471,10 +471,13 @@ Status Server::BuildAndStart(const Options& server_options) {
         TF_RETURN_IF_ERROR(ParseProtoTextFile<MonitoringConfig>(
             server_options.monitoring_config_file, &monitoring_config));
       }
+      HttpServerOptions opt;
+      opt.port = server_options.http_port;
+      opt.num_threads = server_options.http_num_threads;
+      opt.timeout_in_ms = server_options.http_timeout_in_ms;
+      opt.use_session_group = use_session_group;
       http_server_ = CreateAndStartHttpServer(
-          server_options.http_port, server_options.http_num_threads,
-          server_options.http_timeout_in_ms, monitoring_config,
-          server_core_.get());
+          opt, monitoring_config, server_core_.get());
       if (http_server_ != nullptr) {
         LOG(INFO) << "Exporting HTTP/REST API at:" << server_address << " ...";
       } else {

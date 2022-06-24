@@ -59,6 +59,18 @@ HttpRestApiHandler::HttpRestApiHandler(const RunOptions& run_options,
           R"((?i)/v1/models(?:/([^/:]+))?(?:/versions/(\d+))?(?:\/(metadata))?)") {
 }
 
+HttpRestApiHandler::HttpRestApiHandler(const RunOptions& run_options,
+                                       ServerCore* core, bool use_session_group)
+    : run_options_(run_options),
+      core_(core),
+      predictor_(new TensorflowPredictor(true /* use_saved_model */, use_session_group)),
+      prediction_api_regex_(
+          R"((?i)/v1/models/([^/:]+)(?:/versions/(\d+))?:(classify|regress|predict))"),
+      modelstatus_api_regex_(
+          R"((?i)/v1/models(?:/([^/:]+))?(?:/versions/(\d+))?(?:\/(metadata))?)"),
+      use_session_group_(use_session_group) {
+}
+
 HttpRestApiHandler::~HttpRestApiHandler() {}
 
 namespace {
@@ -180,13 +192,23 @@ Status HttpRestApiHandler::ProcessPredictRequest(
         model_version.value());
   }
   JsonPredictRequestFormat format;
-  TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
-      request_body,
-      [this, &request](const string& sig,
-                       ::google::protobuf::Map<string, TensorInfo>* map) {
-        return this->GetInfoMap(request.model_spec(), sig, map);
-      },
-      &request, &format));
+  if (use_session_group_) {
+    TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
+        request_body,
+        [this, &request](const string& sig,
+                         ::google::protobuf::Map<string, TensorInfo>* map) {
+          return this->GetInfoMap(request.model_spec(), sig, map, true);
+        },
+        &request, &format));
+  } else {
+    TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
+        request_body,
+        [this, &request](const string& sig,
+                         ::google::protobuf::Map<string, TensorInfo>* map) {
+          return this->GetInfoMap(request.model_spec(), sig, map, false);
+        },
+        &request, &format));
+  }
 
   PredictResponse response;
   TF_RETURN_IF_ERROR(
@@ -306,17 +328,31 @@ Status HttpRestApiHandler::ProcessModelMetadataRequest(
 
 Status HttpRestApiHandler::GetInfoMap(
     const ModelSpec& model_spec, const string& signature_name,
-    ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap) {
-  ServableHandle<SavedModelBundle> bundle;
-  TF_RETURN_IF_ERROR(core_->GetServableHandle(model_spec, &bundle));
-  const string& signame =
-      signature_name.empty() ? kDefaultServingSignatureDefKey : signature_name;
-  auto iter = bundle->meta_graph_def.signature_def().find(signame);
-  if (iter == bundle->meta_graph_def.signature_def().end()) {
-    return errors::InvalidArgument("Serving signature name: \"", signame,
-                                   "\" not found in signature def");
+    ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap,
+    bool use_bundle_v2) {
+  if (use_bundle_v2) {
+    ServableHandle<SavedModelBundleV2> bundle;
+    TF_RETURN_IF_ERROR(core_->GetServableHandle(model_spec, &bundle));
+    const string& signame =
+        signature_name.empty() ? kDefaultServingSignatureDefKey : signature_name;
+    auto iter = bundle->meta_graph_def.signature_def().find(signame);
+    if (iter == bundle->meta_graph_def.signature_def().end()) {
+      return errors::InvalidArgument("Serving signature name: \"", signame,
+                                     "\" not found in signature def");
+    }
+    *infomap = iter->second.inputs();
+  } else {
+    ServableHandle<SavedModelBundle> bundle;
+    TF_RETURN_IF_ERROR(core_->GetServableHandle(model_spec, &bundle));
+    const string& signame =
+        signature_name.empty() ? kDefaultServingSignatureDefKey : signature_name;
+    auto iter = bundle->meta_graph_def.signature_def().find(signame);
+    if (iter == bundle->meta_graph_def.signature_def().end()) {
+      return errors::InvalidArgument("Serving signature name: \"", signame,
+                                     "\" not found in signature def");
+    }
+    *infomap = iter->second.inputs();
   }
-  *infomap = iter->second.inputs();
   return Status::OK();
 }
 
