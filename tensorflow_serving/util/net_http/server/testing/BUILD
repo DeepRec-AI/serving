@@ -16,5 +16,4 @@ cc_binary(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
-    linkopts = ["-lm"],
 )
