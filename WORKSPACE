@@ -31,10 +31,20 @@ http_archive(
 )
 http_archive(
     name = "bazel_skylib",
-    sha256 = "2c62d8cd4ab1e65c08647eb4afe38f51591f43f7f0885e7769832fa137633dcb",
-    strip_prefix = "bazel-skylib-0.7.0",
-    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/0.7.0.tar.gz"],
+    sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz"],
 )
+
+http_archive(
+    name = "com_github_nelhage_rules_boost",
+    sha256 = "f8c9653c1c49489c04f9f87ab1ee93d7b59bb26a39d9e30e9687fca3c6197c3f",
+		strip_prefix = "rules_boost-9f9fb8b2f0213989247c9d5c0e814a8451d18d7f",
+		urls = ["https://github.com/nelhage/rules_boost/archive/9f9fb8b2f0213989247c9d5c0e814a8451d18d7f.tar.gz"],
+)
+
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
+boost_deps()
+
 # END: Upstream TensorFlow dependencies
 
 # Please add all new TensorFlow Serving dependencies in workspace.bzl.
