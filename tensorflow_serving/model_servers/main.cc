@@ -199,7 +199,9 @@ int main(int argc, char** argv) {
                        "EXPERIMENTAL; CAN BE REMOVED ANYTIME! Load and use "
                        "TensorFlow Lite model from `model.tflite` file in "
                        "SavedModel directory instead of the TensorFlow model "
-                       "from `saved_model.pb` file.")};
+                       "from `saved_model.pb` file."),
+      tensorflow::Flag("use_multi_stream", &options.use_multi_stream,
+                        "Use multi-stream or not in session_group")};
 
   const auto& usage = tensorflow::Flags::Usage(argv[0], flag_list);
   if (!tensorflow::Flags::Parse(&argc, argv, flag_list)) {

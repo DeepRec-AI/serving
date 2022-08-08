@@ -87,6 +87,7 @@ class Server {
     // For session group
     bool use_per_session_threads = false;
     tensorflow::int32 session_num_per_group = 0;
+    bool use_multi_stream = false;
 
     Options();
   };
