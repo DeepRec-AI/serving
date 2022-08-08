@@ -267,6 +267,10 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
       ->set_use_per_session_threads(
           server_options.use_per_session_threads);
 
+  session_bundle_config.mutable_session_config()
+      ->set_use_per_session_stream(
+          server_options.use_multi_stream);
+
   // Batching config
   if (server_options.enable_batching) {
     BatchingParameters* batching_parameters =
