@@ -12,11 +12,25 @@ build:cuda --define=using_cuda=true --define=using_cuda_nvcc=true
 build:mkl --define=build_with_mkl=true --define=enable_mkl=true
 build:mkl --define=tensorflow_mkldnn_contraction_kernel=0
 
+# config to build OneDNN backend with a user specified threadpool.
+build:mkl_threadpool --define=build_with_mkl=true --define=enable_mkl=true
+build:mkl_threadpool --define=tensorflow_mkldnn_contraction_kernel=0
+build:mkl_threadpool --define=build_with_mkl_opensource=true
+build:mkl_threadpool --define=build_with_mkldnn_threadpool=true
+build:mkl_threadpool -c opt
+
 # This config option is used to enable MKL-DNN open source library only,
 # without depending on MKL binary version.
 build:mkl_open_source_only --define=build_with_mkl_dnn_only=true
+build:mkl_open_source_only --define=build_with_mkl_dnn_v1_only=true
 build:mkl_open_source_only --define=build_with_mkl=true --define=enable_mkl=true
 build:mkl_open_source_only --define=tensorflow_mkldnn_contraction_kernel=0
+
+build --action_env TF_USE_CCACHE="0"
+build:opt --copt=-march=native
+build:opt --copt=-Wno-sign-compare
+build:opt --host_copt=-march=native
+build:opt --define with_default_optimizations=true
 
 # Processor native optimizations (depends on build host capabilities).
 build:nativeopt --copt=-march=native
