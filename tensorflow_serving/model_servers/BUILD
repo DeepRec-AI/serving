@@ -456,23 +456,23 @@ pkg_tar(
 )
 
 # Build with '-c opt --copt=-mavx --copt=-msse4.2'
-pkg_deb(
-    name = "tensorflow_model_server_deb",
-    data = ":tensorflow_model_server_tar",
-    description = "TensorFlow Serving ModelServer",
-    homepage = "https://github.com/tensorflow/serving",
-    maintainer = "TensorFlow Serving team",
-    package = "tensorflow-model-server",
-    version = "1.15.0",  # Set when releasing a new version of TensorFlow Serving (e.g. 1.0.0).
-)
+#pkg_deb(
+#    name = "tensorflow_model_server_deb",
+#    data = ":tensorflow_model_server_tar",
+#    description = "TensorFlow Serving ModelServer",
+#    homepage = "https://github.com/tensorflow/serving",
+#    maintainer = "TensorFlow Serving team",
+#    package = "tensorflow-model-server",
+#    version = "1.15.0",  # Set when releasing a new version of TensorFlow Serving (e.g. 1.0.0).
+#)
 
 # Build with '-c opt'
-pkg_deb(
-    name = "tensorflow_model_server_universal_deb",
-    data = ":tensorflow_model_server_tar",
-    description = "TensorFlow Serving ModelServer",
-    homepage = "https://github.com/tensorflow/serving",
-    maintainer = "TensorFlow Serving team",
-    package = "tensorflow-model-server-universal",
-    version = "1.15.0",  # Set when releasing a new version of TensorFlow Serving (e.g. 1.0.0).
-)
+#pkg_deb(
+#    name = "tensorflow_model_server_universal_deb",
+#    data = ":tensorflow_model_server_tar",
+#    description = "TensorFlow Serving ModelServer",
+#    homepage = "https://github.com/tensorflow/serving",
+#    maintainer = "TensorFlow Serving team",
+#    package = "tensorflow-model-server-universal",
+#    version = "1.15.0",  # Set when releasing a new version of TensorFlow Serving (e.g. 1.0.0).
+#)
