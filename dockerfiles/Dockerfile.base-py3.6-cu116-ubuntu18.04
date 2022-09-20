@@ -1,0 +1,7 @@
+FROM alideeprec/deeprec-base:deeprec-base-gpu-py36-cu116-ubuntu18.04
+
+RUN apt-get update
+RUN apt-get install -y automake
+RUN apt-get install -y libtool
+
+RUN ln -s /usr/bin/python /home/pai/bin/python
