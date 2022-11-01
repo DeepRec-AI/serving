@@ -185,10 +185,20 @@ Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
 Status RunSavedModelWarmup(const ModelWarmupOptions& model_warmup_options,
                            const RunOptions& run_options,
                            const string& export_dir, SavedModelBundleV2* bundle) {
-  return InternalRunSavedModelWarmup(model_warmup_options,
-                                     run_options, export_dir,
-                                     bundle->meta_graph_def,
-                                     bundle->session_group->GetLeaderSession());
+  int N = bundle->session_group->GetSessionNum();
+  for (int i = 0; i < N; ++i) {
+    Status s = InternalRunSavedModelWarmup(
+        model_warmup_options,
+        run_options, export_dir,
+        bundle->meta_graph_def,
+        bundle->session_group->GetSession(i));
+    if (!s.ok()) {
+      LOG(ERROR) << "Warmup session group failed. " << s.error_message();
+      return s;
+    }
+  }
+
+  return Status::OK();
 }
 
 }  // namespace serving
