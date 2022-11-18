@@ -270,9 +270,11 @@ Status HttpRestApiHandler::ProcessModelMetadataRequest(
     request.mutable_model_spec()->mutable_version()->set_value(version);
   }
 
+  ModelMetaOption opt;
+  opt.use_session_group = use_session_group_;
   GetModelMetadataResponse response;
   TF_RETURN_IF_ERROR(
-      GetModelMetadataImpl::GetModelMetadata(core_, request, &response));
+      GetModelMetadataImpl::GetModelMetadata(core_, request, &response, opt));
   JsonPrintOptions opts;
   opts.add_whitespace = true;
   opts.always_print_primitive_fields = true;

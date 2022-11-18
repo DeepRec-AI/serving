@@ -49,17 +49,34 @@ Status ValidateGetModelMetadataRequest(const GetModelMetadataRequest& request) {
 
 Status SavedModelGetSignatureDef(ServerCore* core, const ModelSpec& model_spec,
                                  const GetModelMetadataRequest& request,
-                                 GetModelMetadataResponse* response) {
-  ServableHandle<SavedModelBundle> bundle;
-  TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
+                                 GetModelMetadataResponse* response,
+                                 ModelMetaOption opt) {
   SignatureDefMap signature_def_map;
-  for (const auto& signature : bundle->meta_graph_def.signature_def()) {
-    (*signature_def_map.mutable_signature_def())[signature.first] =
-        signature.second;
+  std::string model_name;
+  int64 version;
+  if (opt.use_session_group) {
+    ServableHandle<SavedModelBundleV2> bundle;
+    TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
+    for (const auto& signature : bundle->meta_graph_def.signature_def()) {
+      (*signature_def_map.mutable_signature_def())[signature.first] =
+          signature.second;
+    }
+    model_name = bundle.id().name;
+    version = bundle.id().version;
+  } else {
+    ServableHandle<SavedModelBundle> bundle;
+    TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
+    for (const auto& signature : bundle->meta_graph_def.signature_def()) {
+      (*signature_def_map.mutable_signature_def())[signature.first] =
+          signature.second;
+    }
+    model_name = bundle.id().name;
+    version = bundle.id().version;
   }
+
   auto response_model_spec = response->mutable_model_spec();
-  response_model_spec->set_name(bundle.id().name);
-  response_model_spec->mutable_version()->set_value(bundle.id().version);
+  response_model_spec->set_name(model_name);
+  response_model_spec->mutable_version()->set_value(version);
 
   (*response->mutable_metadata())[GetModelMetadataImpl::kSignatureDef].PackFrom(
       signature_def_map);
@@ -72,24 +89,26 @@ constexpr const char GetModelMetadataImpl::kSignatureDef[];
 
 Status GetModelMetadataImpl::GetModelMetadata(
     ServerCore* core, const GetModelMetadataRequest& request,
-    GetModelMetadataResponse* response) {
+    GetModelMetadataResponse* response,
+    ModelMetaOption opt) {
   if (!request.has_model_spec()) {
     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                               "Missing ModelSpec");
   }
   return GetModelMetadataWithModelSpec(core, request.model_spec(), request,
-                                       response);
+                                       response, opt);
 }
 
 Status GetModelMetadataImpl::GetModelMetadataWithModelSpec(
     ServerCore* core, const ModelSpec& model_spec,
     const GetModelMetadataRequest& request,
-    GetModelMetadataResponse* response) {
+    GetModelMetadataResponse* response,
+    ModelMetaOption opt) {
   TF_RETURN_IF_ERROR(ValidateGetModelMetadataRequest(request));
   for (const auto& metadata_field : request.metadata_field()) {
     if (metadata_field == kSignatureDef) {
       TF_RETURN_IF_ERROR(
-          SavedModelGetSignatureDef(core, model_spec, request, response));
+          SavedModelGetSignatureDef(core, model_spec, request, response, opt));
     } else {
       return tensorflow::errors::InvalidArgument(
           "MetadataField %s is not supported", metadata_field);

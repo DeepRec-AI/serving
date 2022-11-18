@@ -61,8 +61,10 @@ int DeadlineToTimeoutMillis(const gpr_timespec deadline) {
         errors::InvalidArgument("GetModelMetadata API is only available when "
                                 "use_saved_model is set to true"));
   }
+  ModelMetaOption opt;
+  opt.use_session_group = use_session_group_;
   const ::grpc::Status status = ToGRPCStatus(
-      GetModelMetadataImpl::GetModelMetadata(core_, *request, response));
+      GetModelMetadataImpl::GetModelMetadata(core_, *request, response, opt));
   if (!status.ok()) {
     VLOG(1) << "GetModelMetadata failed: " << status.error_message();
   }
