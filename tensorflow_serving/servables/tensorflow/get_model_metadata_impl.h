@@ -23,20 +23,26 @@ limitations under the License.
 namespace tensorflow {
 namespace serving {
 
+struct ModelMetaOption {
+  bool use_session_group = false;
+};
+
 class GetModelMetadataImpl {
  public:
   static constexpr const char kSignatureDef[] = "signature_def";
 
   static Status GetModelMetadata(ServerCore* core,
                                  const GetModelMetadataRequest& request,
-                                 GetModelMetadataResponse* response);
+                                 GetModelMetadataResponse* response,
+                                 ModelMetaOption opt = ModelMetaOption());
 
   // Like GetModelMetadata(), but uses 'model_spec' instead of the one embedded
   // in 'request'.
   static Status GetModelMetadataWithModelSpec(
       ServerCore* core, const ModelSpec& model_spec,
       const GetModelMetadataRequest& request,
-      GetModelMetadataResponse* response);
+      GetModelMetadataResponse* response,
+      ModelMetaOption opt = ModelMetaOption());
 };
 
 }  // namespace serving
