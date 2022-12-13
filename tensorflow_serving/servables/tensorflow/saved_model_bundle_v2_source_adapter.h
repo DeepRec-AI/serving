@@ -57,9 +57,12 @@ class SavedModelBundleV2SourceAdapter final
 
   SimpleLoader<SavedModelBundleV2>::CreatorVariant GetServableCreator(
       std::shared_ptr<SavedModelBundleV2Factory> bundle_factory,
-      const StoragePath& path) const;
+      const StoragePath& path, int model_id) const;
 
   Status Convert(const StoragePath& path,
+                 std::unique_ptr<Loader>* loader) override;
+
+  Status Convert(const StoragePath& path, int model_id,
                  std::unique_ptr<Loader>* loader) override;
 
   // We use a shared ptr to share ownership with Loaders we emit, in case they

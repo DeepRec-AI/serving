@@ -257,17 +257,19 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
   const bool use_saved_model = true;
 
   SessionGroupBundleConfig session_bundle_config;
+  auto model_session_config =
+      session_bundle_config.add_model_session_config();
 
   // session num
-  session_bundle_config.set_session_num(
+  model_session_config->set_session_num(
       server_options.session_num_per_group);
 
   // use_per_session_threads
-  session_bundle_config.mutable_session_config()
+  model_session_config->mutable_session_config()
       ->set_use_per_session_threads(
           server_options.use_per_session_threads);
 
-  session_bundle_config.mutable_session_config()
+  model_session_config->mutable_session_config()
       ->set_use_per_session_stream(
           server_options.use_multi_stream);
 
@@ -287,35 +289,34 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
         "server_options.batching_parameters_file is set without setting "
         "server_options.enable_batching to true.");
   }
-
-  session_bundle_config.mutable_session_config()
+  model_session_config->mutable_session_config()
       ->mutable_gpu_options()
       ->set_per_process_gpu_memory_fraction(
           server_options.per_process_gpu_memory_fraction);
 
   if (server_options.tensorflow_intra_op_parallelism > 0 &&
       server_options.tensorflow_inter_op_parallelism > 0 &&
-      server_options.tensorflow_session_parallelism > 0){
+      server_options.tensorflow_session_parallelism > 0) {
       return errors::InvalidArgument("Either configure "
         "server_options.tensorflow_session_parallelism "
         "or (server_options.tensorflow_intra_op_parallelism, "
         "server_options.tensorflow_inter_op_parallelism) separately. "
         "You cannot configure all.");
   } else if (server_options.tensorflow_intra_op_parallelism > 0 ||
-      server_options.tensorflow_inter_op_parallelism > 0){
-          session_bundle_config.mutable_session_config()
-          ->set_intra_op_parallelism_threads(
-              server_options.tensorflow_intra_op_parallelism);
-          session_bundle_config.mutable_session_config()
-          ->set_inter_op_parallelism_threads(
-              server_options.tensorflow_inter_op_parallelism);
+      server_options.tensorflow_inter_op_parallelism > 0) {
+    model_session_config->mutable_session_config()
+        ->set_intra_op_parallelism_threads(
+            server_options.tensorflow_intra_op_parallelism);
+    model_session_config->mutable_session_config()
+        ->set_inter_op_parallelism_threads(
+            server_options.tensorflow_inter_op_parallelism);
   } else {
-      session_bundle_config.mutable_session_config()
-      ->set_intra_op_parallelism_threads(
-          server_options.tensorflow_session_parallelism);
-      session_bundle_config.mutable_session_config()
-      ->set_inter_op_parallelism_threads(
-          server_options.tensorflow_session_parallelism);
+    model_session_config->mutable_session_config()
+        ->set_intra_op_parallelism_threads(
+            server_options.tensorflow_session_parallelism);
+    model_session_config->mutable_session_config()
+        ->set_inter_op_parallelism_threads(
+            server_options.tensorflow_session_parallelism);
   }
 
   const std::vector<string> tags =
@@ -344,10 +345,7 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
 Status Server::BuildAndStart(const Options& server_options) {
   const bool use_saved_model = true;
 
-  bool use_session_group = false;
-  if (server_options.session_num_per_group > 0) {
-    use_session_group = true;
-  }
+  bool use_session_group = server_options.use_session_group;
 
   if (server_options.grpc_port == 0) {
     return errors::InvalidArgument("server_options.grpc_port is not set.");
@@ -368,6 +366,7 @@ Status Server::BuildAndStart(const Options& server_options) {
   if (server_options.model_config_file.empty()) {
     options.model_server_config = BuildSingleModelConfig(
         server_options.model_name, server_options.model_base_path);
+    use_session_group = server_options.session_num_per_group > 1;
   } else {
     TF_RETURN_IF_ERROR(ParseProtoTextFile<ModelServerConfig>(
         server_options.model_config_file, &options.model_server_config));

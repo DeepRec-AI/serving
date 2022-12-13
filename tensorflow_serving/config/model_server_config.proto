@@ -65,6 +65,9 @@ message ModelConfig {
   //
   // (This can be changed once a model is in serving.)
   LoggingConfig logging_config = 6;
+
+  // model_id in multi-models.
+  int32 model_id = 9;
 }
 
 // Static list of models to be loaded for serving.

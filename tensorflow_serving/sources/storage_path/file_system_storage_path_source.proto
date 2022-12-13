@@ -51,6 +51,9 @@ message FileSystemStoragePathSourceConfig {
         servable_version_policy = 4;
 
     reserved 3;  // Legacy version_policy definition.
+
+    // model_id in multi-models
+    int32 model_id = 5;
   }
 
   // The servables to monitor for new versions, and aspire.

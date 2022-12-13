@@ -65,12 +65,16 @@ class ServableData {
   // !this->ok().
   T ConsumeDataOrDie();
 
+  void SetModelId(int id) { model_id_ = id; }
+  int GetModelId() const { return model_id_; }
+
  private:
   ServableData() = delete;
 
   const ServableId id_;
   const Status status_;
   T data_;
+  int model_id_ = 0;
 };
 
 // Helper static method to create a ServableData object. Caller may skip

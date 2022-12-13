@@ -50,12 +50,12 @@ SavedModelBundleV2SourceAdapter::SavedModelBundleV2SourceAdapter(
 SimpleLoader<SavedModelBundleV2>::CreatorVariant
 SavedModelBundleV2SourceAdapter::GetServableCreator(
     std::shared_ptr<SavedModelBundleV2Factory> bundle_factory,
-    const StoragePath& path) const {
+    const StoragePath& path, int model_id) const {
   if (bundle_factory->config().enable_session_metadata()) {
-    return [bundle_factory, path](const Loader::Metadata& metadata,
+    return [bundle_factory, path, model_id](const Loader::Metadata& metadata,
                                   std::unique_ptr<SavedModelBundleV2>* bundle) {
       TF_RETURN_IF_ERROR(bundle_factory->CreateSavedModelBundleV2WithMetadata(
-          metadata, path, bundle));
+          metadata, path, model_id, bundle));
       if (bundle_factory->config().enable_model_warmup()) {
         return RunSavedModelWarmup(
             bundle_factory->config().model_warmup_options(),
@@ -64,8 +64,8 @@ SavedModelBundleV2SourceAdapter::GetServableCreator(
       return Status::OK();
     };
   }
-  return [bundle_factory, path](std::unique_ptr<SavedModelBundleV2>* bundle) {
-    TF_RETURN_IF_ERROR(bundle_factory->CreateSavedModelBundleV2(path, bundle));
+  return [bundle_factory, path, model_id](std::unique_ptr<SavedModelBundleV2>* bundle) {
+    TF_RETURN_IF_ERROR(bundle_factory->CreateSavedModelBundleV2(path, model_id, bundle));
     if (bundle_factory->config().enable_model_warmup()) {
       return RunSavedModelWarmup(
           bundle_factory->config().model_warmup_options(),
@@ -76,9 +76,14 @@ SavedModelBundleV2SourceAdapter::GetServableCreator(
 }
 
 Status SavedModelBundleV2SourceAdapter::Convert(const StoragePath& path,
-                                              std::unique_ptr<Loader>* loader) {
+                                                std::unique_ptr<Loader>* loader) {
+  return Convert(path, 0, loader);
+}
+
+Status SavedModelBundleV2SourceAdapter::Convert(const StoragePath& path, int model_id,
+                                                std::unique_ptr<Loader>* loader) {
   std::shared_ptr<SavedModelBundleV2Factory> bundle_factory = bundle_factory_;
-  auto servable_creator = GetServableCreator(bundle_factory, path);
+  auto servable_creator = GetServableCreator(bundle_factory, path, model_id);
   auto resource_estimator = [bundle_factory,
                              path](ResourceAllocation* estimate) {
     TF_RETURN_IF_ERROR(

@@ -575,6 +575,8 @@ FileSystemStoragePathSourceConfig ServerCore::CreateStoragePathSourceConfig(
         source_config.add_servables();
     servable->set_servable_name(model.name());
     servable->set_base_path(model.base_path());
+    // user set model_id here.
+    servable->set_model_id(model.model_id());
     *servable->mutable_servable_version_policy() = model.model_version_policy();
   }
   return source_config;

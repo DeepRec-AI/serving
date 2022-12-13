@@ -88,19 +88,19 @@ Status SavedModelBundleV2Factory::EstimateResourceRequirement(
 }
 
 Status SavedModelBundleV2Factory::CreateSavedModelBundleV2WithMetadata(
-    const Loader::Metadata& metadata, const string& path,
+    const Loader::Metadata& metadata, const string& path, int model_id,
     std::unique_ptr<SavedModelBundleV2>* bundle) {
-  return InternalCreateSavedModelBundleV2(metadata, path, bundle);
+  return InternalCreateSavedModelBundleV2(metadata, path, model_id, bundle);
 }
 
 Status SavedModelBundleV2Factory::CreateSavedModelBundleV2(
-    const string& path, std::unique_ptr<SavedModelBundleV2>* bundle) {
-  return InternalCreateSavedModelBundleV2({}, path, bundle);
+    const string& path, int model_id, std::unique_ptr<SavedModelBundleV2>* bundle) {
+  return InternalCreateSavedModelBundleV2({}, path, model_id, bundle);
 }
 
 Status SavedModelBundleV2Factory::InternalCreateSavedModelBundleV2(
     const absl::optional<Loader::Metadata>& metadata, const string& path,
-    std::unique_ptr<SavedModelBundleV2>* bundle) {
+    int model_id, std::unique_ptr<SavedModelBundleV2>* bundle) {
   bundle->reset(new SavedModelBundleV2);
   std::unordered_set<string> saved_model_tags(
       config_.saved_model_tags().begin(), config_.saved_model_tags().end());
@@ -110,7 +110,7 @@ Status SavedModelBundleV2Factory::InternalCreateSavedModelBundleV2(
     saved_model_tags.insert(kSavedModelTagServe);
   }
   const auto& session_options = [&]() {
-    auto result = GetSessionOptions(config_);
+    auto result = GetSessionOptions(config_, model_id);
     if (metadata.has_value()) {
       auto* session_metadata =
           result.config.mutable_experimental()->mutable_session_metadata();
