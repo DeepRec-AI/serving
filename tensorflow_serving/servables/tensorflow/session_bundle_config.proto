@@ -101,10 +101,6 @@ message SessionGroupBundleConfig {
   // the best isolation currently available across multiple Session servables.
   string session_target = 1;
 
-  // TensorFlow Session configuration options.
-  // See details at tensorflow/core/protobuf/config.proto.
-  ConfigProto session_config = 2;
-
   // If set, each emitted session is wrapped with a layer that schedules Run()
   // calls in batches. The batching layer is transparent to the client
   // (implements the tensorflow::Session API).
@@ -169,8 +165,19 @@ message SessionGroupBundleConfig {
   // instead of the TensorFlow model from `saved_model.pb` file.
   bool use_tflite_model = 783;
 
-  // session_num of the session group.
-  int32 session_num = 784;
+  message ModelSessionConfig {
+    // TensorFlow Session configuration options.
+    // See details at tensorflow/core/protobuf/config.proto.
+    ConfigProto session_config = 1;
+    // session_num of the session group.
+    int32 session_num = 2;// [default = 1];
+    // gpu num
+    //int32 gpu_num = 3;
+    // model id in multi-models
+    int32 model_id = 3;
+  }
+
+  repeated ModelSessionConfig model_session_config = 784;
 }
 
 // Batching parameters. Each individual parameter is optional. If omitted, the

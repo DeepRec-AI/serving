@@ -282,6 +282,10 @@ Status PollFileSystemForConfig(
        config.servables()) {
     std::vector<ServableData<StoragePath>> versions;
     TF_RETURN_IF_ERROR(PollFileSystemForServable(servable, &versions));
+    // Set model_id for versions
+    for (auto& v : versions) {
+      v.SetModelId(servable.model_id());
+    }
     versions_by_servable_name->insert(
         {servable.servable_name(), std::move(versions)});
   }

@@ -33,7 +33,7 @@ namespace serving {
 // TODO(b/32248363): add SavedModelBundleConfig after we switch Model Server to
 // Saved Model.
 SessionOptions GetSessionOptions(const SessionBundleConfig& config);
-SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config);
+SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config, int model_id);
 
 // Returns RunOptions based on SessionBundleConfig.
 // TODO(b/32248363): add SavedModelBundleConfig after we switch Model Server to

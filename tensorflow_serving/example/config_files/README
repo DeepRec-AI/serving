@@ -1,0 +1,3 @@
+Usage:
+
+CUDA_VISIBLE_DEVICES=0,1 tensorflow_model_server --use_session_group=true --model_config_file=session_group_multi_models_config --platform_config_file=session_group_multi_models_platform_config

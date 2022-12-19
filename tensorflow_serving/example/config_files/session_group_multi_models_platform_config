@@ -1,0 +1,36 @@
+platform_configs {
+  key: "tensorflow"
+  value {
+    source_adapter_config {
+      [type.googleapis.com/tensorflow.serving.SavedModelBundleV2SourceAdapterConfig] {
+        legacy_config {
+          model_session_config {
+            session_config {
+              gpu_options {
+                allow_growth: true
+              }
+              intra_op_parallelism_threads: 8
+              inter_op_parallelism_threads: 8
+              use_per_session_threads: true
+              use_per_session_stream: true
+            }
+            session_num: 2
+          }
+          model_session_config {
+            session_config {
+              gpu_options {
+                allow_growth: true
+              }
+              intra_op_parallelism_threads: 16
+              inter_op_parallelism_threads: 16
+              use_per_session_threads: true
+              use_per_session_stream: true
+            }
+            session_num: 4
+          }
+        }
+      }
+    }
+  }
+}
+

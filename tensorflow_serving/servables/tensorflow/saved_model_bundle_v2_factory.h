@@ -63,7 +63,7 @@ class SavedModelBundleV2Factory {
   /// @param path      Path to the model.
   /// @param bundle    Newly created SavedModelBundleV2 if the returned Status is
   /// OK.
-  Status CreateSavedModelBundleV2(const string& path,
+  Status CreateSavedModelBundleV2(const string& path, int model_id,
                                   std::unique_ptr<SavedModelBundleV2>* bundle);
 
   /// Instantiates a bundle from a given export or SavedModel path and the given
@@ -75,7 +75,7 @@ class SavedModelBundleV2Factory {
   /// OK.
   Status CreateSavedModelBundleV2WithMetadata(
       const Loader::Metadata& metadata, const string& path,
-      std::unique_ptr<SavedModelBundleV2>* bundle);
+      int model_id, std::unique_ptr<SavedModelBundleV2>* bundle);
 
   /// Estimates the resources a SavedModel bundle will use once loaded, from its
   /// export path.
@@ -96,7 +96,7 @@ class SavedModelBundleV2Factory {
 
   Status InternalCreateSavedModelBundleV2(
       const absl::optional<Loader::Metadata>& metadata, const string& path,
-      std::unique_ptr<SavedModelBundleV2>* bundle);
+      int model_id, std::unique_ptr<SavedModelBundleV2>* bundle);
 
   const SessionGroupBundleConfig config_;
 

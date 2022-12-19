@@ -135,6 +135,10 @@ class UnarySourceAdapter : public SourceAdapter<InputType, OutputType> {
   // Converts a single InputType instance into a corresponding OutputType
   // instance.
   virtual Status Convert(const InputType& data, OutputType* converted_data) = 0;
+  virtual Status Convert(const InputType& data, int model_id,
+      OutputType* converted_data) {
+    return Convert(data, converted_data);
+  }
 };
 
 // A source adapter that converts every incoming ServableData<InputType> item
@@ -210,7 +214,8 @@ UnarySourceAdapter<InputType, OutputType>::Adapt(
   for (const ServableData<InputType>& version : versions) {
     if (version.status().ok()) {
       OutputType adapted_data;
-      Status adapt_status = Convert(version.DataOrDie(), &adapted_data);
+      Status adapt_status = Convert(version.DataOrDie(),
+          version.GetModelId(), &adapted_data);
       if (adapt_status.ok()) {
         adapted_versions.emplace_back(
             ServableData<OutputType>{version.id(), std::move(adapted_data)});

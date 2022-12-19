@@ -75,11 +75,27 @@ SessionOptions GetSessionOptions(const SessionBundleConfig& config) {
   return options;
 }
 
-SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config) {
+SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config, int model_id) {
   SessionGroupOptions options;
   options.target = config.session_target();
-  options.config = config.session_config();
-  options.session_num = config.session_num();
+  if (model_id >= config.model_session_config_size()) {
+    LOG(FATAL) << "Multi model config error, required #" << model_id
+               << " model config, but got max config count "
+               << config.model_session_config_size();
+  }
+  options.config = config.model_session_config()[model_id].session_config();
+  options.metadata.session_num = config.model_session_config()[model_id].session_num();
+  if (options.metadata.session_num == 0) {
+    LOG(WARNING) << "User set use_session_group=true, but the #" << model_id
+                 << " model config don't contain session_num field, "
+                 << "please check platform_config_file config file. "
+                 << "Now use default value 1.";
+    options.metadata.session_num = 1;
+  }
+  for (auto& conf : config.model_session_config()) {
+    options.metadata.streams_vec.emplace_back(conf.session_num());
+  }
+  options.metadata.model_id = model_id;
   return options;
 }
 
@@ -169,8 +185,11 @@ Status WrapSessionGroupForBatching(const BatchingParameters& batching_config,
                                    std::unique_ptr<SessionGroup>* session_group) {
   for (int i = 0; i < (*session_group)->GetSessionNum(); ++i) {
     std::unique_ptr<Session>* sess = (*session_group)->GetSessionPtr(i);
-    WrapSessionForBatching(batching_config, batch_scheduler, signatures, sess);
+    Status s = WrapSessionForBatching(batching_config, batch_scheduler, signatures, sess);
+    if (!s.ok()) return s;
   }
+
+  return Status::OK();
 }
 
 Status WrapSessionForBatching(const BatchingParameters& batching_config,
