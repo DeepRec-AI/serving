@@ -15,6 +15,7 @@ platform_configs {
               use_per_session_stream: true
             }
             session_num: 2
+            cpusets: "1,2;5,6"
           }
           model_session_config {
             session_config {
@@ -27,6 +28,7 @@ platform_configs {
               use_per_session_stream: true
             }
             session_num: 4
+            cpusets: "20,21;23,24;26,27;29,30"
           }
         }
       }
