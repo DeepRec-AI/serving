@@ -96,6 +96,8 @@ SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config, in
     options.metadata.streams_vec.emplace_back(conf.session_num());
   }
   options.metadata.model_id = model_id;
+  options.metadata.cpusets = config.model_session_config()[model_id].cpusets();
+ 
   return options;
 }
 

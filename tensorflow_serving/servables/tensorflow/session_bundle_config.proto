@@ -170,11 +170,13 @@ message SessionGroupBundleConfig {
     // See details at tensorflow/core/protobuf/config.proto.
     ConfigProto session_config = 1;
     // session_num of the session group.
-    int32 session_num = 2;// [default = 1];
+    int32 session_num = 2;
     // gpu num
     //int32 gpu_num = 3;
     // model id in multi-models
     int32 model_id = 3;
+    // cpusets
+    string cpusets = 4;
   }
 
   repeated ModelSessionConfig model_session_config = 784;
