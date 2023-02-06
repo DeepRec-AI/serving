@@ -88,6 +88,7 @@ class Server {
     bool use_per_session_threads = false;
     bool use_session_group = false;
     tensorflow::int32 session_num_per_group = 0;
+    tensorflow::string gpu_ids_list = "";
     bool use_multi_stream = false;
 
     Options();
