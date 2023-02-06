@@ -264,6 +264,15 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
   model_session_config->set_session_num(
       server_options.session_num_per_group);
 
+  // gpu_ids_list for a session group
+  if (!server_options.gpu_ids_list.empty()) {
+    std::vector<string> ids =
+        str_util::Split(server_options.gpu_ids_list, ',');
+    for (auto id : ids) {
+      model_session_config->add_gpu_ids(std::stoi(id));
+    }
+  }
+
   // use_per_session_threads
   model_session_config->mutable_session_config()
       ->set_use_per_session_threads(
@@ -366,7 +375,7 @@ Status Server::BuildAndStart(const Options& server_options) {
   if (server_options.model_config_file.empty()) {
     options.model_server_config = BuildSingleModelConfig(
         server_options.model_name, server_options.model_base_path);
-    use_session_group = server_options.session_num_per_group > 1;
+    use_session_group = server_options.session_num_per_group > 0;
   } else {
     TF_RETURN_IF_ERROR(ParseProtoTextFile<ModelServerConfig>(
         server_options.model_config_file, &options.model_server_config));

@@ -84,16 +84,18 @@ SessionGroupOptions GetSessionOptions(const SessionGroupBundleConfig& config, in
                << config.model_session_config_size();
   }
   options.config = config.model_session_config()[model_id].session_config();
-  options.metadata.session_num = config.model_session_config()[model_id].session_num();
-  if (options.metadata.session_num == 0) {
+  options.metadata.session_count = config.model_session_config()[model_id].session_num();
+  if (options.metadata.session_count == 0) {
     LOG(WARNING) << "User set use_session_group=true, but the #" << model_id
                  << " model config don't contain session_num field, "
                  << "please check platform_config_file config file. "
                  << "Now use default value 1.";
-    options.metadata.session_num = 1;
+    options.metadata.session_count = 1;
   }
-  for (auto& conf : config.model_session_config()) {
-    options.metadata.streams_vec.emplace_back(conf.session_num());
+  if (!config.model_session_config()[model_id].gpu_ids().empty()) {
+    for (auto id : config.model_session_config()[model_id].gpu_ids()) {
+      options.metadata.gpu_ids.emplace_back(id);
+    }
   }
   options.metadata.model_id = model_id;
   options.metadata.cpusets = config.model_session_config()[model_id].cpusets();

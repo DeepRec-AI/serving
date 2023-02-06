@@ -160,6 +160,10 @@ int main(int argc, char** argv) {
                        &options.session_num_per_group,
                        "Session num for a session group, "
                        "default 0 means we not use session group."),
+      tensorflow::Flag("gpu_ids_list",
+                       &options.gpu_ids_list,
+                       "GPU id list for a session group, "
+                       "default '', the legal format is '0,1,2...'."),
       tensorflow::Flag(
           "ssl_config_file", &options.ssl_config_file,
           "If non-empty, read an ascii SSLConfig protobuf from "
