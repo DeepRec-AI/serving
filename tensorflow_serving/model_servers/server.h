@@ -91,6 +91,15 @@ class Server {
     tensorflow::string gpu_ids_list = "";
     bool use_multi_stream = false;
 
+    // Timeline
+    tensorflow::int64 timeline_start_step = -1;
+    tensorflow::int64 timeline_interval_step = -1;
+    tensorflow::int64 timeline_trace_count = -1;
+    tensorflow::string timeline_path = "";
+    tensorflow::string oss_endpoint = "";
+    tensorflow::string oss_access_id = "";
+    tensorflow::string oss_access_key = "";
+
     Options();
   };
 

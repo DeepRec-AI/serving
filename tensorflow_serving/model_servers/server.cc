@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include "tensorflow_serving/model_servers/server.h"
+#include "tensorflow_serving/util/tracer.h"
 
 #include <unistd.h>
 
@@ -179,6 +180,35 @@ void Server::PollFilesystemAndReloadConfig(const string& config_file_path) {
 }
 
 namespace {
+void ParseTimelineConfig(const Server::Options& options) {
+  auto start_step = options.timeline_start_step;
+  auto interval_step = options.timeline_interval_step;
+  auto trace_count = options.timeline_trace_count;
+  auto path = options.timeline_path;
+  if (start_step >= 0 && interval_step > 0
+      && trace_count > 0 && !path.empty()) {
+    // save timeline to local
+    if (path[0] == '/') {
+      Tracer::GetTracer()->SetParams(start_step, interval_step, trace_count, path);
+    } else if (path.find("oss://") != std::string::npos) {
+      // save timeline to oss
+      if (options.oss_endpoint == "" ||
+          options.oss_access_id == "" ||
+          options.oss_access_key == "") {
+        LOG(ERROR) << "ERROR: Timeline require oss_endpoint, oss_access_id, and oss_access_key."
+                   << " We will not collect timeline.";
+        return;
+      }
+      Tracer::GetTracer()->SetParams(start_step,
+          interval_step, trace_count, options.oss_endpoint,
+          options.oss_access_id, options.oss_access_key, path);
+    } else {
+      LOG(ERROR) << "ERROR: Only support to save timeline to local or oss now."
+                 << " We will not collect timeline.";
+    }
+  }
+}
+
 Status CreatePlatformConfigMap(const Server::Options& server_options,
                                ServerCore::Options& options) {
   const bool use_saved_model = true;
@@ -200,6 +230,8 @@ Status CreatePlatformConfigMap(const Server::Options& server_options,
         "server_options.batching_parameters_file is set without setting "
         "server_options.enable_batching to true.");
   }
+
+  ParseTimelineConfig(server_options);
 
   session_bundle_config.mutable_session_config()
       ->mutable_gpu_options()
@@ -259,6 +291,8 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
   SessionGroupBundleConfig session_bundle_config;
   auto model_session_config =
       session_bundle_config.add_model_session_config();
+
+  ParseTimelineConfig(server_options);
 
   // session num
   model_session_config->set_session_num(
