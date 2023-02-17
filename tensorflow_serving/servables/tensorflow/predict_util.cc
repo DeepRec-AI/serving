@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include "tensorflow_serving/servables/tensorflow/predict_util.h"
+#include "tensorflow_serving/util/tracer.h"
 
 #include <map>
 #include <memory>
@@ -32,6 +33,9 @@ limitations under the License.
 
 namespace tensorflow {
 namespace serving {
+
+#define likely(x)    __builtin_expect(!!(x), 1)
+
 namespace {
 
 Status VerifySignature(const SignatureDef& signature) {
@@ -205,11 +209,21 @@ Status RunPredict(
   TF_RETURN_IF_ERROR(PreProcessPrediction(signature, request, &input_tensors,
                                           &output_tensor_names,
                                           &output_tensor_aliases));
+  bool trace_timeline = Tracer::GetTracer()->NeedTracing();
   std::vector<Tensor> outputs;
   RunMetadata run_metadata;
-  TF_RETURN_IF_ERROR(session->Run(run_options, input_tensors,
-                                  output_tensor_names, {}, &outputs,
-                                  &run_metadata));
+  if (likely(!trace_timeline)) {
+    TF_RETURN_IF_ERROR(session->Run(run_options, input_tensors,
+                                    output_tensor_names, {}, &outputs,
+                                    &run_metadata));
+  } else {
+    RunOptions tmp_run_opt = run_options;
+    tmp_run_opt.set_trace_level(tensorflow::RunOptions::FULL_TRACE);
+    TF_RETURN_IF_ERROR(session->Run(tmp_run_opt, input_tensors,
+                                    output_tensor_names, {}, &outputs,
+                                    &run_metadata));
+    Tracer::GetTracer()->GenTimeline(run_metadata);
+  }
 
   return PostProcessPredictionResult(output_tensor_aliases, outputs, option,
                                      response);

@@ -207,6 +207,20 @@ int main(int argc, char** argv) {
                        "TensorFlow Lite model from `model.tflite` file in "
                        "SavedModel directory instead of the TensorFlow model "
                        "from `saved_model.pb` file."),
+      tensorflow::Flag("timeline_start_step", &options.timeline_start_step,
+                       "timeline_start_step"),
+      tensorflow::Flag("timeline_interval_step", &options.timeline_interval_step,
+                       "timeline_interval_step"),
+      tensorflow::Flag("timeline_trace_count", &options.timeline_trace_count,
+                       "timeline_trace_count"),
+      tensorflow::Flag("timeline_path", &options.timeline_path,
+                       "timeline_path"),
+      tensorflow::Flag("oss_endpoint", &options.oss_endpoint,
+                       "oss_endpoint"),
+      tensorflow::Flag("oss_access_id", &options.oss_access_id,
+                       "oss_access_id"),
+      tensorflow::Flag("oss_access_key", &options.oss_access_key,
+                       "oss_access_key"),
       tensorflow::Flag("use_multi_stream", &options.use_multi_stream,
                         "Use multi-stream or not in session_group")};
 
