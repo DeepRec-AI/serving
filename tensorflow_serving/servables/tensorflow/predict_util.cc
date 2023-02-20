@@ -212,6 +212,13 @@ Status RunPredict(
   bool trace_timeline = Tracer::GetTracer()->NeedTracing();
   std::vector<Tensor> outputs;
   RunMetadata run_metadata;
+  // set running graph signature
+  *run_metadata.mutable_graph_signature() =
+      signature_name + request.model_spec().name();
+  if (servable_version) {
+    *run_metadata.mutable_graph_signature() +=
+        std::to_string(*servable_version);
+  }
   if (likely(!trace_timeline)) {
     TF_RETURN_IF_ERROR(session->Run(run_options, input_tensors,
                                     output_tensor_names, {}, &outputs,
