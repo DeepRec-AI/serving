@@ -56,6 +56,12 @@ limitations under the License.
 int main(int argc, char** argv) {
   tensorflow::serving::main::Server::Options options;
   bool display_version = false;
+
+  // Enable INFERENCE_MODE by default
+  if (setenv("INFERENCE_MODE", "1", 1) != 0) {
+    std::cout << "Set env INFERENCE_MODE=1 error.\n";
+  }
+
   std::vector<tensorflow::Flag> flag_list = {
       tensorflow::Flag("port", &options.grpc_port,
                        "Port to listen on for gRPC API"),
