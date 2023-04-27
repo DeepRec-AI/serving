@@ -100,6 +100,8 @@ class Server {
     tensorflow::string oss_access_id = "";
     tensorflow::string oss_access_key = "";
 
+    bool enable_device_placement_optimization = false;
+
     Options();
   };
 

@@ -233,6 +233,13 @@ Status CreatePlatformConfigMap(const Server::Options& server_options,
 
   ParseTimelineConfig(server_options);
 
+  if (server_options.enable_device_placement_optimization) {
+    session_bundle_config.mutable_session_config()
+        ->mutable_graph_options()
+        ->mutable_optimizer_options()
+        ->set_device_placement_optimization(true);
+  }
+
   session_bundle_config.mutable_session_config()
       ->mutable_gpu_options()
       ->set_per_process_gpu_memory_fraction(
@@ -293,6 +300,13 @@ Status CreatePlatformConfigMapV2(const Server::Options& server_options,
       session_bundle_config.add_model_session_config();
 
   ParseTimelineConfig(server_options);
+
+  if (server_options.enable_device_placement_optimization) {
+    model_session_config->mutable_session_config()
+        ->mutable_graph_options()
+        ->mutable_optimizer_options()
+        ->set_device_placement_optimization(true);
+  }
 
   // session num
   model_session_config->set_session_num(
