@@ -39,8 +39,8 @@ build:nativeopt --copt=-march=native
 build:nativeopt --host_copt=-march=native
 build:nativeopt --copt=-O3
 
-build --action_env PYTHON_BIN_PATH="/home/pai/bin/python"
-build --define PYTHON_BIN_PATH=/home/pai/bin/python
+build --action_env PYTHON_BIN_PATH="/usr/bin/python"
+build --define PYTHON_BIN_PATH=/usr/bin/python
 
 build --spawn_strategy=standalone
 build --genrule_strategy=standalone
