@@ -48,7 +48,7 @@ def tf_serving_workspace():
     # ===== Override TF defined `com_google_absl` (we need a recent version).
     tf_http_archive(
         name = "com_google_absl",
-        patch_file = str(Label("@org_tensorflow//third_party:0001-abseil.patch")),
+        patch_file = [str(Label("@org_tensorflow//third_party:0001-abseil.patch"))],
         build_file = str(Label("@org_tensorflow//third_party:com_google_absl.BUILD")),
         sha256 = "b6aa25c8283cca9de282bb7f5880b04492af76213b2f48c135c4963c6333a21e",
         strip_prefix = "abseil-cpp-36d37ab992038f52276ca66b9da80c1cf0f57dc2",
