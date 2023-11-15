@@ -25,8 +25,8 @@ def _tensorflow_http_archive(ctx):
 
     strip_prefix = "DeepRec-%s" % git_commit
     urls = [
-        "https://mirror.bazel.build/github.com/alibaba/deeprec/archive/%s.tar.gz" % git_commit,
-        "https://github.com/alibaba/deeprec/archive/%s.tar.gz" % git_commit,
+        "https://mirror.bazel.build/github.com/DeepRec-AI/DeepRec/archive/%s.tar.gz" % git_commit,
+        "https://github.com/DeepRec-AI/DeepRec/archive/%s.tar.gz" % git_commit,
     ]
     ctx.download_and_extract(
         urls,
