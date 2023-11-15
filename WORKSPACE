@@ -11,8 +11,8 @@ load("//tensorflow_serving:repo.bzl", "tensorflow_http_archive")
 
 tensorflow_http_archive(
     name = "org_tensorflow",
-    sha256 = "2d82da9f21ab9cae2af2dac5afbc6ccb3377295864dda6e6ff1cd3fd6d2d40d2",
-    git_commit = "8b90640c5a74f32e81a11ab8051414744d2807fc",
+    sha256 = "d9bdcd3e21ed9de600e224a1bb2ddd47beba64e944a1015ad7c0e3d9e6b8b461",
+    git_commit = "8b02c47ab1c12e4924a486ececf5681312416e14",
 )
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -25,7 +25,6 @@ http_archive(
     sha256 = "ddce3b3a3909f99b28b25071c40b7fec7e2e1d1d1a4b2e933f3082aa99517105",
     strip_prefix = "rules_closure-316e6133888bfc39fb860a4f1a31cfcbae485aef",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_closure/archive/316e6133888bfc39fb860a4f1a31cfcbae485aef.tar.gz",
         "https://github.com/bazelbuild/rules_closure/archive/316e6133888bfc39fb860a4f1a31cfcbae485aef.tar.gz",  # 2019-03-21
     ],
 )
